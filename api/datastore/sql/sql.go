@@ -41,6 +41,7 @@ var tables = [...]string{`CREATE TABLE IF NOT EXISTS routes (
 	type varchar(16) NOT NULL,
 	headers text NOT NULL,
 	config text NOT NULL,
+	created_at text,
 	PRIMARY KEY (app_name, path)
 );`,
 
