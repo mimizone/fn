@@ -1,5 +1,5 @@
-hash: 9c04b00c52a7378e748a93c062aacd32f39fece29a79b50fddad6aa81e2cbab0
-updated: 2017-09-19T14:13:44.550343214-07:00
+hash: fb3f5df1802408cd3e4ce6f13308ae96a7d4028cebe703d0427d286406edc835
+updated: 2017-10-18T12:50:56.166902884-07:00
 imports:
 - name: github.com/amir/raidman
   version: 1ccc43bfb9c93cb401a4025e49c64ba71e5e668b
@@ -277,12 +277,6 @@ imports:
   - json/parser
   - json/scanner
   - json/token
-- name: github.com/iron-io/iron_go3
-  version: ded317cb147d3b52b593da08495bc7d53efa17d8
-  subpackages:
-  - api
-  - config
-  - mq
 - name: github.com/jmoiron/jsonq
   version: e874b168d07ecc7808bc950a17998a8aa3141d82
 - name: github.com/jmoiron/sqlx
@@ -305,6 +299,8 @@ imports:
   - buffer
   - jlexer
   - jwriter
+- name: github.com/mattes/migrate
+  version: 5b98c13eff7657ab49a1a5f705b72f961d7fc558
 - name: github.com/mattn/go-isatty
   version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
 - name: github.com/mattn/go-sqlite3
@@ -362,6 +358,7 @@ imports:
   version: c5b7fccd204277076155f10851dad72b76a49317
   subpackages:
   - prometheus
+  - prometheus/promhttp
 - name: github.com/prometheus/client_model
   version: 6f3806018612930941127f2a7c6c453ba2c527d2
   subpackages:
