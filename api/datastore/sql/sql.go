@@ -160,6 +160,10 @@ func checkExistence(db *sqlx.DB) bool {
 	var dummy string
 	err := row.Scan(&dummy)
 	if err != nil && err != sql.ErrNoRows {
+		// TODO we should probably ensure this is a certain 'no such table' error
+		// and if it's not that or err no rows, we should probably block start up.
+		// if we return false here spuriously, then migrations could be skipped,
+		// which would be bad.
 		return false
 	}
 	return true
