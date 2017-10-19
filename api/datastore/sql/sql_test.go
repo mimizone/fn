@@ -15,8 +15,8 @@ import (
 // * run all down migrations
 // * run all up migrations
 // [ then run tests against that db ]
-func newWithMigrations(url *url.URL) (models.Datastore, error) {
-	ds, err := New(url)
+func newWithMigrations(url *url.URL) (*sqlStore, error) {
+	ds, err := newDS(url)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func newWithMigrations(url *url.URL) (models.Datastore, error) {
 	}
 
 	// go through New, to ensure our Up logic works in there...
-	ds, err = New(url)
+	ds, err = newDS(url)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func TestDatastore(t *testing.T) {
 	}
 	f := func(t *testing.T) models.Datastore {
 		os.RemoveAll("sqlite_test_dir")
-		ds, err := New(u)
+		ds, err := newDS(u)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -57,31 +57,21 @@ func TestDatastore(t *testing.T) {
 	}
 	datastoretest.Test(t, f)
 
-	f = func(t *testing.T) models.Datastore {
-		os.RemoveAll("sqlite_test_dir")
-		ds, err := newWithMigrations(u)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		// we don't want to test the validator, really
-		return datastoreutil.NewValidator(ds)
-	}
-
-	// test migrations work
-	datastoretest.Test(t, f)
+	// NOTE: sqlite3 does not like ALTER TABLE DROP COLUMN so do not run
+	// migration tests against it, only pg and mysql -- should prove UP migrations
+	// will likely work for sqlite3, but may need separate testing by devs :(
 
 	// if being run from test script (CI) poke around for pg and mysql containers
-	// to run tests against them too
+	// to run tests against them too. this runs with a fresh db first run, then
+	// will down migrate all migrations, up migrate, and run tests again.
 
-	if pg := os.Getenv("POSTGRES_URL"); pg != "" {
-		u, err := url.Parse(pg)
-		if err != nil {
-			t.Fatal(err)
-		}
-
+	both := func(u *url.URL) {
 		f := func(t *testing.T) models.Datastore {
-			ds, err := New(u)
+			ds, err := newDS(u)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ds.clear()
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -92,14 +82,37 @@ func TestDatastore(t *testing.T) {
 		datastoretest.Test(t, f)
 
 		f = func(t *testing.T) models.Datastore {
+			t.Log("with migrations now!")
 			ds, err := newWithMigrations(u)
 			if err != nil {
 				t.Fatal(err)
 			}
-			return ds
+			ds.clear()
+			if err != nil {
+				t.Fatal(err)
+			}
+			return datastoreutil.NewValidator(ds)
 		}
 
 		// test that migrations work & things work with them
 		datastoretest.Test(t, f)
+	}
+
+	if pg := os.Getenv("POSTGRES_URL"); pg != "" {
+		u, err := url.Parse(pg)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		both(u)
+	}
+
+	if mysql := os.Getenv("MYSQL_URL"); mysql != "" {
+		u, err := url.Parse(mysql)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		both(u)
 	}
 }

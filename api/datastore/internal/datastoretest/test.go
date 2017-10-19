@@ -3,7 +3,6 @@ package datastoretest
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"log"
 	"reflect"
 	"testing"
@@ -29,7 +28,6 @@ func setLogBuffer() *bytes.Buffer {
 func Test(t *testing.T, dsf func(t *testing.T) models.Datastore) {
 	buf := setLogBuffer()
 	defer func() {
-		fmt.Println("LOOK I FUCKING RAN")
 		if t.Failed() {
 			t.Log(buf.String())
 		}

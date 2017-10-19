@@ -33,7 +33,7 @@ docker run --name ${DB_CONTAINER} -p 3306:3306 -e MYSQL_DATABASE=$DB_DB \
 sleep 15
 MYSQL_HOST=`host ${DB_CONTAINER}`
 MYSQL_PORT=3306
-MYSQL_URL="mysql://${DB_USER}:${DB_PASS}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${DB_DB}"
+export MYSQL_URL="mysql://${DB_USER}:${DB_PASS}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${DB_DB}"
 
 DB_CONTAINER="func-postgres-test"
 docker rm -fv ${DB_CONTAINER} || echo No prev test db container
@@ -42,10 +42,10 @@ docker run --name ${DB_CONTAINER} -e "POSTGRES_DB=$DB_DB" \
 sleep 15
 POSTGRES_HOST=`host ${DB_CONTAINER}`
 POSTGRES_PORT=5432
-POSTGRES_URL="postgres://${DB_USER}:${DB_PASS}@${POSTGRES_HOST}:${POSTGRES_PORT}/${DB_DB}?sslmode=disable"
+export POSTGRES_URL="postgres://${DB_USER}:${DB_PASS}@${POSTGRES_HOST}:${POSTGRES_PORT}/${DB_DB}?sslmode=disable"
 
-go test -v $(go list ./... | grep -v vendor | grep -v examples | grep -v test/fn-api-tests)
-go vet -v $(go list ./... | grep -v vendor)
+go test $(go list ./... | grep -v vendor | grep -v examples | grep -v test/fn-api-tests)
+go vet $(go list ./... | grep -v vendor)
 docker rm --force func-postgres-test 
 docker rm --force func-mysql-test
 

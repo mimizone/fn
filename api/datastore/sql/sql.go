@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/fnproject/fn/api/datastore/sql/migrations"
@@ -87,6 +88,11 @@ type sqlStore struct {
 // New will open the db specified by url, create any tables necessary
 // and return a models.Datastore safe for concurrent usage.
 func New(url *url.URL) (models.Datastore, error) {
+	return newDS(url)
+}
+
+// for test methods, return concrete type, but don't expose
+func newDS(url *url.URL) (*sqlStore, error) {
 	driver := url.Scheme
 
 	// driver must be one of these for sqlx to work, double check:
@@ -217,6 +223,33 @@ func latestVersion(migs []string) int {
 	}
 
 	return int(highest)
+}
+
+// clear is for tests only, be careful, it deletes all records.
+func (ds *sqlStore) clear() error {
+	return ds.Tx(func(tx *sqlx.Tx) error {
+		query := tx.Rebind(`DELETE FROM routes`)
+		_, err := tx.Exec(query)
+		if err != nil {
+			return err
+		}
+
+		query = tx.Rebind(`DELETE FROM calls`)
+		_, err = tx.Exec(query)
+		if err != nil {
+			return err
+		}
+
+		query = tx.Rebind(`DELETE FROM apps`)
+		_, err = tx.Exec(query)
+		if err != nil {
+			return err
+		}
+
+		query = tx.Rebind(`DELETE FROM logs`)
+		_, err = tx.Exec(query)
+		return err
+	})
 }
 
 func (ds *sqlStore) InsertApp(ctx context.Context, app *models.App) (*models.App, error) {
