@@ -1,1 +1,1 @@
-ALTER TABLE routes DROP created_at;
+ALTER TABLE routes DROP COLUMN created_at;
