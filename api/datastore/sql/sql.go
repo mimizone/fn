@@ -173,16 +173,7 @@ func checkExistence(db *sqlx.DB) bool {
 // over all the migrations BUT we must be sure to set the right migration
 // number so that only current migrations are skipped, not any future ones.
 func runMigrations(url string, exists bool) error {
-	s := bindata.Resource(migrations.AssetNames(),
-		func(name string) ([]byte, error) {
-			return migrations.Asset(name)
-		})
-
-	d, err := bindata.WithInstance(s)
-	if err != nil {
-		return err
-	}
-	m, err := migrate.NewWithSourceInstance("go-bindata", d, url)
+	m, err := migrator(url)
 	if err != nil {
 		return err
 	}
@@ -198,6 +189,20 @@ func runMigrations(url string, exists bool) error {
 		err = nil
 	}
 	return err
+}
+
+func migrator(url string) (*migrate.Migrate, error) {
+	s := bindata.Resource(migrations.AssetNames(),
+		func(name string) ([]byte, error) {
+			return migrations.Asset(name)
+		})
+
+	d, err := bindata.WithInstance(s)
+	if err != nil {
+		return nil, err
+	}
+
+	return migrate.NewWithSourceInstance("go-bindata", d, url)
 }
 
 // latest version will find the latest version from a list of migration

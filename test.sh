@@ -1,39 +1,48 @@
+#!/bin/bash
 # Top level test script to start all other tests
 
 set -ex
 
-docker rm -fv func-postgres-test || echo No prev test db container
-docker run --name func-postgres-test -p 15432:5432 -d postgres
-docker rm -fv func-mysql-test || echo No prev mysql test db container
-docker run --name func-mysql-test -p 3307:3306 -e MYSQL_DATABASE=funcs -e MYSQL_ROOT_PASSWORD=root -d mysql
-sleep 5
-case ${DOCKER_LOCATION:-localhost} in
-localhost)
-    export POSTGRES_HOST=localhost
-    export POSTGRES_PORT=15432
+export DB_USER=funcs
+export DB_PASS=funcpass
+export DB_DB=funcs
 
-    export MYSQL_HOST=localhost
-    export MYSQL_PORT=3307
-    ;;
-docker_ip)
-    if [[ !  -z  ${DOCKER_HOST}  ]]
-    then
-        DOCKER_IP=`echo ${DOCKER_HOST} | awk -F/ '{print $3}'| awk -F: '{print $1}'`
-    fi
-    export POSTGRES_HOST=${DOCKER_IP:-localhost}
-    export POSTGRES_PORT=15432
+function host {
+    case ${DOCKER_LOCATION:-localhost} in
+    localhost)
+        echo "localhost"
+        ;;
+    docker_ip)
+        if [[ !  -z  ${DOCKER_HOST}  ]]
+        then
+            DOCKER_IP=`echo ${DOCKER_HOST} | awk -F/ '{print $3}'| awk -F: '{print $1}'`
+        fi
 
-    export MYSQL_HOST=${DOCKER_IP:-localhost}
-    export MYSQL_PORT=3307
-    ;;
-container_ip)
-    export POSTGRES_HOST="$(docker inspect -f '{{.NetworkSettings.IPAddress}}' func-postgres-test)"
-    export POSTGRES_PORT=5432
+        echo ${DOCKER_IP}
+        ;;
+    container_ip)
+        echo "$(docker inspect -f '{{.NetworkSettings.IPAddress}}' ${1})"
+        ;;
+    esac
+}
 
-    export MYSQL_HOST="$(docker inspect -f '{{.NetworkSettings.IPAddress}}' func-mysql-test)"
-    export MYSQL_PORT=3306
-    ;;
-esac
+DB_CONTAINER="func-mysql-test"
+docker rm -fv ${DB_CONTAINER} || echo No prev mysql test db container
+docker run --name ${DB_CONTAINER} -p 3306:3306 -e MYSQL_DATABASE=$DB_DB \
+  -e MYSQL_ROOT_PASSWORD=root -e MYSQL_USER=$DB_USER -e MYSQL_PASSWORD=$DB_PASS -d mysql
+sleep 15
+MYSQL_HOST=`host ${DB_CONTAINER}`
+MYSQL_PORT=3306
+MYSQL_URL="mysql://${DB_USER}:${DB_PASS}@tcp(${MYSQL_HOST}:${MYSQL_PORT})/${DB_DB}"
+
+DB_CONTAINER="func-postgres-test"
+docker rm -fv ${DB_CONTAINER} || echo No prev test db container
+docker run --name ${DB_CONTAINER} -e "POSTGRES_DB=$DB_DB" \
+  -e "POSTGRES_PASSWORD=$DB_PASS" -e "POSTGRES_USER=$DB_USER" -p 5432:5432 -d postgres
+sleep 15
+POSTGRES_HOST=`host ${DB_CONTAINER}`
+POSTGRES_PORT=5432
+POSTGRES_URL="postgres://${DB_USER}:${DB_PASS}@${POSTGRES_HOST}:${POSTGRES_PORT}/${DB_DB}?sslmode=disable"
 
 go test -v $(go list ./... | grep -v vendor | grep -v examples | grep -v test/fn-api-tests)
 go vet -v $(go list ./... | grep -v vendor)

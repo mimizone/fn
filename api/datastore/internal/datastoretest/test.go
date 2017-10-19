@@ -3,25 +3,22 @@ package datastoretest
 import (
 	"bytes"
 	"context"
-	"log"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/fnproject/fn/api/id"
 	"github.com/fnproject/fn/api/models"
-	"github.com/gin-gonic/gin"
 	"github.com/go-openapi/strfmt"
-	"github.com/sirupsen/logrus"
 )
 
 func setLogBuffer() *bytes.Buffer {
 	var buf bytes.Buffer
-	buf.WriteByte('\n')
-	logrus.SetOutput(&buf)
-	gin.DefaultErrorWriter = &buf
-	gin.DefaultWriter = &buf
-	log.SetOutput(&buf)
+	//buf.WriteByte('\n')
+	//logrus.SetOutput(&buf)
+	//gin.DefaultErrorWriter = &buf
+	//gin.DefaultWriter = &buf
+	//log.SetOutput(&buf)
 	return &buf
 }
 

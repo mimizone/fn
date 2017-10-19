@@ -1,1 +1,1 @@
-ALTER TABLE users DROP COLUMN IF EXISTS city;
+ALTER TABLE routes DROP created_at;
