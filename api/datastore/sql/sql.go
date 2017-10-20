@@ -183,6 +183,7 @@ func runMigrations(url string, exists bool) error {
 	if err != nil {
 		return err
 	}
+	defer m.Close()
 
 	if !exists {
 		// set to highest and bail
